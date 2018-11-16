@@ -1,11 +1,11 @@
 from collections import Counter
 
-from features import transform
+from src.features import transform
 
 # Indices for wordform, lemma and tags in the data list.
-WF    = 1
+WF = 1
 LEMMA = 2
-TAGS  = 3
+TAGS = 3
 
 # Minimum number of character occurrences we require for embedded
 # characters.
@@ -14,40 +14,45 @@ MINCHAROCC = 100
 # Word boundary.
 WB = '#'
 
-def encode(x,encoder):
-    encoder.setdefault(x,len(encoder))
-    return encoder[x]
 
-def count(s,counter):
-    for x in s:
-        counter[x] += 1
+def read_data(filename, language):
+    """
 
-def readdata(fn,lan):
+
+    :param filename: file in src.data
+    :param language: FI, ES, TUR
+    :return: data: list of encoded (word_form, lemma, tags), character_encoder: character encoder dict ,
+        tags: void dictionary, embedded_chars: set of embedded characters
+    """
     data = []
-    charcounts = Counter()
+    char_counts = Counter()
 
     # We need to first count all characters to make sure that
     # characters occurring more than MINCHAROCC will get the first 0
     # ... N character codes.
-    for line in map(lambda l: l.strip('\n'), open(fn)):
-        wf, tags, lemma = line.lower().split('\t')
-        wf = transform(wf,lan)
-        lemma = transform(lemma,lan)
+    with open(filename, "r") as f:
+        for line in f:
+            word_form, tags, lemma = line.strip("\n").lower().split('\t')
+            word_form = transform(word_form, language)
+            lemma = transform(lemma, language)
+            char_counts.update(word_form)
 
-        count(wf,charcounts)
-        data.append((wf,lemma,tags))
+            # count(word_form, charcounts)
+            data.append((word_form, lemma, tags))
 
-    charcounts = sorted([(count,char) for char, count in charcounts.items()],reverse=1)
-    tagencoder = {}
-    cencoder = {x[1]:i for i, x in enumerate(charcounts)}
+    char_counts = sorted([(_count, char) for char, _count in char_counts.items()],
+                         reverse=True)
+    # TODO why does tag_encoder remain void?
+    tag_encoder = {}
+
+    character_encoder = {x[1]: i for i, x in enumerate(char_counts)}
 
     for i, d in enumerate(data):
-        wf, lemma, tags = d
-        wf = [encode(c,cencoder) for c in WB + wf + WB]
-        tags = [encode(t,tagencoder) for t in tags.split(',')]
-        lemma = [encode(c,cencoder) for c in WB + lemma + WB]
-        data[i] = (wf,lemma,tags)
+        word_form, lemma, tags = d
+        word_form = [character_encoder.setdefault(c, len(character_encoder)) for c in WB + word_form + WB]
+        tags = [tag_encoder.setdefault(t, len(tag_encoder)) for t in tags.split(',')]
+        lemma = [character_encoder.setdefault(c, len(character_encoder)) for c in WB + lemma + WB]
+        data[i] = (word_form, lemma, tags)
 
-    embedchars = set([cencoder[c] for count,c in charcounts if count > MINCHAROCC])
-    return data, cencoder, tagencoder, embedchars
-            
+    embedded_chars = set([character_encoder[c] for _count, c in char_counts if _count > MINCHAROCC])
+    return data, character_encoder, tag_encoder, embedded_chars

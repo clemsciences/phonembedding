@@ -2,12 +2,12 @@ import numpy as np
 import scipy.stats as st
 from random import seed
 
-from data import readdata
-from svd import getsvd
-from w2v import getw2v
-from correlation import getsimmatrix, correlation
-from features import getphonfeatures
-from rnn import initmodel,encode,decode,update, train
+from src.data import read_data
+from src.svd import get_svd
+from src.w2v import get_w2v
+from src.correlation import get_similarity_matrix, correlation
+from src.features import getphonfeatures
+from src.rnn import initmodel, encode, decode, update, train
 
 seed(42)
 np.random.seed(43)
@@ -16,90 +16,115 @@ np.random.seed(43)
 N = 20
 P = 0.99
 
-def confidenceival(a):
-    return st.t.interval(P, len(a)-1, loc=np.mean(a), scale=st.sem(a))
 
-def truncate(m,d):
-    return m[0:m.shape[0],0:d]
+def confidence_interval_value(a):
+    return st.t.interval(P, len(a) - 1, loc=np.mean(a), scale=st.sem(a))
+
+
+def truncate(m, d):
+    return m[0:m.shape[0], 0:d]
+
 
 def matshuf(m):
     res = np.array(m)
     np.random.shuffle(res)
     return res
 
-def getsvdembs(data,cencoder,embchars,cdecoder):
-    svdembedding = getsvd(data,cencoder)
-    svdembeddings = [truncate(svdembedding,n) for n in [5,15,30]]
-    return svdembeddings
 
-def getw2vembs(data,cencoder,embchars,cdecoder):
-    return [getw2v(data,embchars,5,cdecoder),
-            getw2v(data,embchars,15,cdecoder),
-            getw2v(data,embchars,30,cdecoder)]
+def getsvdembs(filename, cencoder, embchars, cdecoder):
+    """
 
-def checkr(ival,r):
-    if ival[0] < r and ival[1] < r:
+    :param filename: filename of data
+    :param cencoder:
+    :param embchars: useless, but useful for function compatibility
+    :param cdecoder: useless, but useful for function compatibility
+    :return:
+    """
+    svd_embedding = get_svd(filename, cencoder)
+    svd_embeddings = [truncate(svd_embedding, n) for n in [5, 15, 30]]
+    return svd_embeddings
+
+
+def getw2vembs(data, cencoder, embchars, cdecoder):
+    """
+
+    :param data:
+    :param cencoder: useless, but useful for function compatibility
+    :param embchars:
+    :param cdecoder:
+    :return:
+    """
+    return [get_w2v(data, embchars, 5, cdecoder),
+            get_w2v(data, embchars, 15, cdecoder),
+            get_w2v(data, embchars, 30, cdecoder)]
+
+
+def check_r(interval_value, r):
+    if interval_value[0] < r and interval_value[1] < r:
         return "<"
     else:
         return ">"
 
-def correlation_experiment(file,lan,embf,name):
-    data, cencoder, tencoder, embchars = readdata(file,lan)
-    cdecoder = {v:k for k,v in cencoder.items()}
+
+def correlation_experiment(filename, language, embf, name):
+    data, character_encoder, tag_encoder, embedded_chars = read_data(filename, language)
+    character_decoder = {v: k for k, v in character_encoder.items()}
     features = getphonfeatures()
-    lanfeatures = [np.array(features[cdecoder[f]]) 
-                   if cdecoder[f] in features 
-                   else None for f in range(len(cencoder))]
+    language_features = [np.array(features[character_decoder[f]])
+                   if character_decoder[f] in features
+                   else None for f in range(len(character_encoder))]
 
-    featsim = getsimmatrix(lanfeatures,len(cencoder), embchars)
+    featsim = get_similarity_matrix(language_features, character_encoder)
 
-    embeddings = embf(data,cencoder,embchars,cdecoder)
+    embeddings = embf(data, character_encoder, embedded_chars, character_decoder)
 
-    sims = [getsimmatrix(m,len(cencoder), embchars) for m in embeddings]
-    rs = [correlation(featsim,sims[i])[0] for i in [0,1,2]]
-    print("%s %s:" % (lan,name))
+    sims = [get_similarity_matrix(m, character_encoder) for m in embeddings]
+    rs = [correlation(featsim, sims[i])[0] for i in [0, 1, 2]]
+    print("%s %s:" % (language, name))
     print(" PEARSON R FOR EMBEDDING AND FEATURE REPR. SIMILARITIES:")
-    print("  %s,DIM=5" % lan,rs[0])
-    print("  %s,DIM=15" % lan,rs[1])
-    print("  %s,DIM=30" % lan,rs[2])
+    print("  %s,DIM=5" % language, rs[0])
+    print("  %s,DIM=15" % language, rs[1])
+    print("  %s,DIM=30" % language, rs[2])
 
-    randrs = [[], [], []]
+    random_rs = [[], [], []]
     for i in range(N):
-        ranembeddings = [matshuf(m) for m in embeddings]
-        ransims = [getsimmatrix(m,len(cencoder), embchars) for m in ranembeddings]
-        randrs[0].append(correlation(featsim,ransims[0])[0])
-        randrs[1].append(correlation(featsim,ransims[1])[0])
-        randrs[2].append(correlation(featsim,ransims[2])[0])
+        random_embeddings = [matshuf(m) for m in embeddings]
+        random_similarities = [get_similarity_matrix(m, character_encoder) for m in random_embeddings]
+        random_rs[0].append(correlation(featsim, random_similarities[0])[0])
+        random_rs[1].append(correlation(featsim, random_similarities[1])[0])
+        random_rs[2].append(correlation(featsim, random_similarities[2])[0])
 
     print((" P=%.2f CONF. INTERVALS FOR PEARSON R OF RANDOM ASSIGNMENT OF\n" % P) +
           " EMBEDDINGS TO PHONEMES AND PHONETIC FEATURE DESCRIPTIONS:")
-    civals = [confidenceival(randrs[i]) for i in [0,1,2]]
-    print("  %s,DIM=5" % lan, confidenceival(randrs[0]),checkr(civals[0],rs[0]),rs[0])
-    print("  %s,DIM=15" % lan, confidenceival(randrs[1]),checkr(civals[1],rs[1]),rs[1])
-    print("  %s,DIM=30" % lan, confidenceival(randrs[2]),checkr(civals[2],rs[2]),rs[2])
+    civals = [confidence_interval_value(random_rs[i]) for i in [0, 1, 2]]
+    print("  %s,DIM=5" % language, confidence_interval_value(random_rs[0]), check_r(civals[0], rs[0]), rs[0])
+    print("  %s,DIM=15" % language, confidence_interval_value(random_rs[1]), check_r(civals[1], rs[1]), rs[1])
+    print("  %s,DIM=30" % language, confidence_interval_value(random_rs[2]), check_r(civals[2], rs[2]), rs[2])
     print()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     print("1. CORRELATION EXPERIMENTS")
     print("--------------------------")
     print()
-#    correlation_experiment("../data/finnish","FI",getsvdembs,"SVD")
-#    correlation_experiment("../data/turkish","TUR",getsvdembs,"SVD")
-#    correlation_experiment("../data/spanish","ES",getsvdembs,"SVD")
+    correlation_experiment("../data/finnish", "FI", getsvdembs, "SVD")
+    correlation_experiment("../data/finnish", "FI", getw2vembs, "W2V")
 
-#    correlation_experiment("../data/finnish","FI",getw2vembs,"W2V")
-#    correlation_experiment("../data/turkish","TUR",getw2vembs,"W2V")
-#    correlation_experiment("../data/spanish","ES",getw2vembs,"W2V")
+    correlation_experiment("../data/spanish", "ES", getsvdembs, "SVD")
+    correlation_experiment("../data/spanish", "ES", getw2vembs, "W2V")
 
-#    correlation_experiment("../data/finnish","FI",getrnnembs,"RNN")
-#    correlation_experiment("../data/turkish","TUR",getrnnembs,"RNN")
-#    correlation_experiment("../data/spanish","ES",getrnnembs,"RNN")
+    correlation_experiment("../data/turkish", "TUR", getsvdembs, "SVD")
+    correlation_experiment("../data/turkish", "TUR", getw2vembs, "W2V")
 
-    data, cencoder, tencoder, embchars = readdata('../data/finnish',"FI")
-    modeld = initmodel(cencoder,tencoder,15)
-    encoded = encode(data[0][1],data[0][2],modeld)
-    train(data,modeld)
-#    for i in range(100):
-#        print(update(data[0][1],data[0][2],data[0][0],modeld))
+    # TODO getrnnembs is missing
+    # correlation_experiment("../data/finnish", "FI", getrnnembs, "RNN")
+    # correlation_experiment("../data/turkish", "TUR", getrnnembs, "RNN")
+    # correlation_experiment("../data/spanish", "ES", getrnnembs, "RNN")
 
+    training_data, training_character_encoder, training_tag_encoder, training_embedded_characters = \
+        read_data('../data/finnish', "FI")
+    training_modeld = initmodel(training_character_encoder, training_tag_encoder, 15)
+    training_encoded = encode(training_data[0][1], training_data[0][2], training_modeld)
+    train(training_data, training_modeld)
+    for _ in range(100):
+        print(update(training_data[0][1], training_data[0][2], training_data[0][0], training_modeld))
