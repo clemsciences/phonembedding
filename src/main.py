@@ -31,7 +31,7 @@ def matshuf(m):
     return res
 
 
-def getsvdembs(filename, cencoder, embchars, cdecoder):
+def get_svd_embeddings(filename, cencoder, embchars, cdecoder):
     """
 
     :param filename: filename of data
@@ -71,8 +71,8 @@ def correlation_experiment(filename, language, embf, name):
     character_decoder = {v: k for k, v in character_encoder.items()}
     features = getphonfeatures()
     language_features = [np.array(features[character_decoder[f]])
-                   if character_decoder[f] in features
-                   else None for f in range(len(character_encoder))]
+                         if character_decoder[f] in features
+                         else None for f in range(len(character_encoder))]
 
     featsim = get_similarity_matrix(language_features, character_encoder)
 
@@ -107,24 +107,24 @@ if __name__ == "__main__":
     print("1. CORRELATION EXPERIMENTS")
     print("--------------------------")
     print()
-    correlation_experiment("../data/finnish", "FI", getsvdembs, "SVD")
-    correlation_experiment("../data/finnish", "FI", getw2vembs, "W2V")
-
-    correlation_experiment("../data/spanish", "ES", getsvdembs, "SVD")
-    correlation_experiment("../data/spanish", "ES", getw2vembs, "W2V")
-
-    correlation_experiment("../data/turkish", "TUR", getsvdembs, "SVD")
-    correlation_experiment("../data/turkish", "TUR", getw2vembs, "W2V")
+    correlation_experiment("../data/finnish", "FI", get_svd_embeddings, "SVD")
+    # correlation_experiment("../data/finnish", "FI", getw2vembs, "W2V")
+    #
+    # correlation_experiment("../data/spanish", "ES", getsvdembs, "SVD")
+    # correlation_experiment("../data/spanish", "ES", getw2vembs, "W2V")
+    #
+    # correlation_experiment("../data/turkish", "TUR", getsvdembs, "SVD")
+    # correlation_experiment("../data/turkish", "TUR", getw2vembs, "W2V")
 
     # TODO getrnnembs is missing
     # correlation_experiment("../data/finnish", "FI", getrnnembs, "RNN")
     # correlation_experiment("../data/turkish", "TUR", getrnnembs, "RNN")
     # correlation_experiment("../data/spanish", "ES", getrnnembs, "RNN")
 
-    training_data, training_character_encoder, training_tag_encoder, training_embedded_characters = \
-        read_data('../data/finnish', "FI")
-    training_modeld = initmodel(training_character_encoder, training_tag_encoder, 15)
-    training_encoded = encode(training_data[0][1], training_data[0][2], training_modeld)
-    train(training_data, training_modeld)
-    for _ in range(100):
-        print(update(training_data[0][1], training_data[0][2], training_data[0][0], training_modeld))
+    # training_data, training_character_encoder, training_tag_encoder, training_embedded_characters = \
+    #     read_data('../data/finnish', "FI")
+    # training_modeld = initmodel(training_character_encoder, training_tag_encoder, 15)
+    # training_encoded = encode(training_data[0][1], training_data[0][2], training_modeld)
+    # train(training_data, training_modeld)
+    # for _ in range(100):
+    #     print(update(training_data[0][1], training_data[0][2], training_data[0][0], training_modeld))
