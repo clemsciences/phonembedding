@@ -4,6 +4,9 @@ import dynet as dy
 import random
 import pickle
 
+from data import *
+
+
 LSTM_NUM_OF_LAYERS = 1
 STATE_SIZE = 32
 

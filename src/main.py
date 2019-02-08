@@ -67,9 +67,8 @@ def correlation_experiment(file,lan,embf,name):
     cdecoder = {v:k for k,v in cencoder.items()}
     tdecoder = {v:k for k,v in tencoder.items()}
     features = getphonfeatures()
-    lanfeatures = [np.array(features[cdecoder[f]]) 
-                   if cdecoder[f] in features 
-                   else None for f in range(len(cencoder))]
+    print(cencoder)
+    lanfeatures = [np.array(features[cdecoder[f]]) for f in range(len(cencoder)) if cdecoder[f] in features]
 
     featsim = getsimmatrix(lanfeatures,len(cencoder), embchars)
 

@@ -1,5 +1,5 @@
 from collections import Counter
-
+import codecs
 from features import transform
 
 # Indices for wordform, lemma and tags in the data list.
@@ -29,7 +29,7 @@ def readdata(fn,lan):
     # We need to first count all characters to make sure that
     # characters occurring more than MINCHAROCC will get the first 0
     # ... N character codes.
-    for line in map(lambda l: l.strip('\n'), open(fn)):
+    for line in map(lambda l: l.strip('\n'), codecs.open(fn, encoding="utf-8")):
         wf, tags, lemma = line.lower().split('\t')
         wf = transform(wf,lan)
         lemma = transform(lemma,lan)
