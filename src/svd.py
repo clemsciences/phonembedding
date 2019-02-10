@@ -8,34 +8,45 @@ import numpy as np
 WINDOW = 2
 
 
-def buildmatrix(data, charencoder):
+def build_matrix(data, character_encoder):
+    """
+
+    :param data:
+    :param character_encoder:
+    :return:
+    """
     # Initializes to non-zero to avoid NAN during np.log.
-    jointcounts = np.ones((len(charencoder), len(charencoder))) * 0.0001
-    singlecounts = np.ones((len(charencoder), 1)) * 0.0001
+    joint_counts = np.ones((len(character_encoder), len(character_encoder))) * 0.0001
+    single_counts = np.ones((len(character_encoder), 1)) * 0.0001
 
-    jointtot = 0
-    singletot = 0
+    joint_total = 0
+    single_total = 0
 
-    for wf, _, _ in data:
-        for i, c in enumerate(wf):
+    for word_form, _, _ in data:
+        for i, character in enumerate(word_form):
             for j in range(i - WINDOW, i + WINDOW):
-                if j == i or j < 0 or j >= len(wf):
+                if j == i or j < 0 or j >= len(word_form):
                     continue
-                jointcounts[c][wf[j]] += 1
-                jointtot += 1
-            singlecounts[c][0] += 1
-            singletot += 1
+                joint_counts[character][word_form[j]] += 1
+                joint_total += 1
+            single_counts[character][0] += 1
+            single_total += 1
 
-    jointdistr = jointcounts * (1.0 / jointtot)
-    singledistr = singlecounts * (1.0 / singletot)
-    pmi = np.log(np.divide(jointdistr, np.dot(singledistr,
-                                              np.transpose(singledistr))))
+    joint_distribution = joint_counts * (1.0 / joint_total)
+    single_distribution = single_counts * (1.0 / single_total)
+    pmi = np.log(np.divide(joint_distribution, np.dot(single_distribution, np.transpose(single_distribution))))
     return np.multiply(pmi, pmi > 0)
 
 
-def getsvd(data, charencoder):
-    ppmimatrix = buildmatrix(data, charencoder)
-    u, s, vt = np.linalg.svd(ppmimatrix)
+def get_svd(data, character_encoder):
+    """
+
+    :param data: list of list of
+    :param character_encoder:
+    :return:
+    """
+    ppmi_matrix = build_matrix(data, character_encoder)
+    u, s, vt = np.linalg.svd(ppmi_matrix)
     return np.dot(u, np.diag(s))
 
 

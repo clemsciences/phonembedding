@@ -3,8 +3,8 @@ import scipy.stats as st
 from random import seed
 
 from src.data import readdata
-from src.svd import getsvd
-from src.w2v import getw2v
+from src.svd import get_svd
+from src.w2v import get_w2v
 from src.correlation import getsimmatrix, correlation
 from src.features import getphonfeatures
 from src.rnn import train
@@ -37,7 +37,7 @@ def matshuf(m):
 def getsvdembs(data, cencoder, embchars, tencoder, cdecoder, tdecoder, lan):
     if allembeddings["svd"][lan] == None:
         print("Training SVD embeddings for %s" % lan)
-        svdembedding = getsvd(data, cencoder)
+        svdembedding = get_svd(data, cencoder)
         svdembeddings = [truncate(svdembedding, n) for n in [5, 15, 30]]
         allembeddings["svd"][lan] = svdembeddings
     return allembeddings["svd"][lan]
@@ -46,9 +46,9 @@ def getsvdembs(data, cencoder, embchars, tencoder, cdecoder, tdecoder, lan):
 def getw2vembs(data, cencoder, embchars, tencoder, cdecoder, tdecoder, lan):
     if allembeddings["w2v"][lan] == None:
         print("Training W2V embeddings for %s" % lan)
-        allembeddings["w2v"][lan] = [getw2v(data, embchars, 5, cdecoder),
-                                     getw2v(data, embchars, 15, cdecoder),
-                                     getw2v(data, embchars, 30, cdecoder)]
+        allembeddings["w2v"][lan] = [get_w2v(data, embchars, 5, cdecoder),
+                                     get_w2v(data, embchars, 15, cdecoder),
+                                     get_w2v(data, embchars, 30, cdecoder)]
     return allembeddings["w2v"][lan]
 
 

@@ -17,6 +17,13 @@ EPOCHS = 10
 
 
 def init(embedding_size, cencoder, tencoder):
+    """
+
+    :param character_encoder:
+    :param tag_encoder:
+    :param embedded_dimension:
+    :return:
+    """
     global model, enc_fwd_lstm, enc_bwd_lstm, dec_lstm, char_lookup, attention_w1, \
         attention_w2, attention_v, decoder_w, decoder_b, output_lookup, tag_lookup
     model = dy.Model()
@@ -50,6 +57,7 @@ def run_lstm(init_state, input_vecs):
 
 
 def encode_sentence(enc_fwd_lstm, enc_bwd_lstm, sentence):
+
     sentence_rev = list(reversed(sentence))
 
     fwd_vectors = run_lstm(enc_fwd_lstm.initial_state(), sentence)

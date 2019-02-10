@@ -12,6 +12,10 @@ features = ['cons', 'son', 'syll', 'voice', 'labial', 'coronal', 'dorsal',
 
 
 def getphonfeatures():
+    """
+
+    :return: feature vectors of IPA characters
+    """
     phoneme_to_feature = {}
 
     phoneme_to_feature['p'] = [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -106,28 +110,34 @@ def getphonfeatures():
     return phoneme_to_feature
 
 
-def transform(s, lan):
-    if lan == 'FI':
-        s = s.replace('y', 'Y')
-    elif lan == 'ES':
-        s = s.replace('j', 'K')
-        s = s.replace('ll', 'ʎ')
-        s = s.replace('r', 'ɾ')
-        s = s.replace('c', 'θ')
-        s = s.replace('ñ', 'ɲ')
-        s = s.replace('qu', 'k')
-        s = s.replace('ó', 'o')
-        s = s.replace('á', 'a')
-        s = s.replace('í', 'i')
-        s = s.replace('x', 'ks')  # FIXME!
-        s = [c for c in s]
-        for i, c in enumerate(s):
-            if i > 0 and s[i - 1] in VOWELS:
+def transform(sequence, language):
+    """
+    Transcribes sequence into phonetic representation
+    :param sequence: sequence to transcribe
+    :param language: language whose phonetic rules are used
+    :return: transcribed sequence
+    """
+    assert language in ["FI", "ES", "TUR"]
+
+    if language == 'FI':
+        sequence = sequence.replace('y', 'Y')
+    elif language == 'ES':
+        sequence = sequence.replace('j', 'K')
+        sequence = sequence.replace('ll', 'ʎ')
+        sequence = sequence.replace('r', 'ɾ')
+        sequence = sequence.replace('c', 'θ')
+        sequence = sequence.replace('ñ', 'ɲ')
+        sequence = sequence.replace('qu', 'k')
+        sequence = sequence.replace('ó', 'o')
+        sequence = sequence.replace('á', 'a')
+        sequence = sequence.replace('í', 'i')
+        sequence = sequence.replace('x', 'ks')  # FIXME!
+        sequence = [c for c in sequence]
+        for i, c in enumerate(sequence):
+            if i > 0 and sequence[i - 1] in VOWELS:
                 if c in SPREPLACE:
-                    s[i] = SPREPLACE[c]
-        s = ''.join(s)
-    elif lan == "TUR":
-        s = s.replace('j', 'J')
-    else:
-        assert 0
-    return s
+                    sequence[i] = SPREPLACE[c]
+        sequence = ''.join(sequence)
+    elif language == "TUR":
+        sequence = sequence.replace('j', 'J')
+    return sequence
